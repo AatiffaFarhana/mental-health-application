@@ -114,8 +114,6 @@ function Footer() {
 
           <p className="text-sm text-gray-300">
             © 2026 It's Okay To Not Be Okay.
-            Built with React, Tailwind CSS,
-            GSAP and Java Spring Boot.
           </p>
 
         </div>

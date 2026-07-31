@@ -120,7 +120,7 @@ const getMoodStats = async (req, res) => {
 
     const moods = await Mood.find({
       user: req.user.id,
-    });
+    }).sort({ createdAt: 1 });
 
     const stats = {
       Happy: 0,

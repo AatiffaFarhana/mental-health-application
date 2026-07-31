@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
 import { useAuth } from "../context/AuthContext";
+import api from "../api/api";
 // import ThemeToggle from "./ThemeToggle";
 
 function Navbar() {
@@ -13,6 +14,9 @@ function Navbar() {
   const navigate = useNavigate();
 
   const { user, logout } = useAuth();
+  const [profile, setProfile] = useState(null);
+
+  
 
   useEffect(() => {
     gsap.from(navRef.current, {
@@ -22,7 +26,22 @@ function Navbar() {
       ease: "power3.out",
     });
   }, []);
+  useEffect(() => {
+  if (!user) return;
 
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get("/profile");
+      setProfile(res.data);
+    } catch (err) {
+      console.log(err);
+      setProfile(null);
+    }
+  };
+
+  fetchProfile();
+
+}, [user]);
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -88,7 +107,7 @@ function Navbar() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border overflow-hidden">
+                <div className="absolute right-0 top-14 w-72 bg-white rounded-2xl shadow-2xl border">
 
                   <div className="px-5 py-4 bg-emerald-50">
 
@@ -101,13 +120,33 @@ function Navbar() {
                     </p>
 
                   </div>
+                  <div className="p-6 space-y-4">
 
-                  <button
+                    <p>
+                      📝 Mood Entries :
+                      <strong> {profile.moodCount}</strong>
+                    </p>
+
+                    <p>
+                      😊 Latest Mood :
+                      <strong> {profile.latestMood}</strong>
+                    </p>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full bg-red-500 hover:bg-red-600 text-white rounded-lg py-3"
+                    >
+                      Logout
+                    </button>
+
+                  </div>
+
+                  {/* <button
                     onClick={handleLogout}
                     className="w-full text-left px-5 py-3 hover:bg-red-50 text-red-600 transition"
                   >
                     Logout
-                  </button>
+                  </button> */}
 
                 </div>
               )}
@@ -185,15 +224,49 @@ function Navbar() {
 
               </div>
 
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setMenuOpen(false);
-                }}
-                className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-4 py-2"
-              >
-                Logout
-              </button>
+              <div className="relative">
+
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="w-11 h-11 rounded-full bg-emerald-600 text-white font-bold text-lg flex items-center justify-center"
+                >
+                  {user.name.charAt(0).toUpperCase()}
+                </button>
+
+                {profileOpen && profile && (
+
+                  <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl p-5">
+
+                    <h3 className="text-xl font-bold text-emerald-700">
+                      👤 {profile.name}
+                    </h3>
+
+                    <p className="text-gray-500 mt-2">
+                      {profile.email}
+                    </p>
+
+                    <hr className="my-4" />
+
+                    <p>
+                      📝 Mood Entries : <strong>{profile.moodCount}</strong>
+                    </p>
+
+                    <p className="mt-2">
+                      😊 Latest Mood : <strong>{profile.latestMood}</strong>
+                    </p>
+
+                    <button
+                      onClick={handleLogout}
+                      className="mt-5 w-full bg-red-500 hover:bg-red-600 text-white rounded-lg py-2"
+                    >
+                      Logout
+                    </button>
+
+                  </div>
+
+                )}
+
+              </div>
             </>
           ) : (
             <>

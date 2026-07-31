@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { Link } from "react-router-dom";
 import heroImage from "../assets/hero.jpg";
-
+import Affirmation from "../components/Affirmation";
 function Home() {
   //const heroRef = useRef(null);
   const titleRef = useRef(null);
@@ -100,19 +100,20 @@ function Home() {
 
       <section className="max-w-6xl mx-auto py-20 px-6">
 
-        <div className="bg-white dark:bg-[#24372E] rounded-3xl shadow-lg p-10">
+        {/* <div className="bg-white dark:bg-[#24372E] rounded-3xl shadow-lg p-10">
 
           <h2 className="text-3xl font-bold text-emerald-700 dark:text-green-300">
             Today's Positive Affirmation
           </h2>
 
-          <p className="mt-6 text-lg leading-8">
-            You have survived every difficult day that brought you here.
+          <p className="mt-6 text-lg leading-8"> */}
+            {/* You have survived every difficult day that brought you here.
             Healing is not a race, and asking for help is one of the bravest
-            things you can do.
-          </p>
+            things you can do. */}
+            <Affirmation/>
+          {/* </p>
 
-        </div>
+        </div> */}
 
       </section>
 
@@ -196,3 +197,10 @@ function Home() {
 }
 
 export default Home;
+
+
+
+
+
+
+

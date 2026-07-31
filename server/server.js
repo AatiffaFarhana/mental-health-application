@@ -30,3 +30,19 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// const streakRoutes = require("./routes/streakRoutes");
+
+// app.use("/api/streak", streakRoutes);
+
+const profileRoutes = require("./routes/profileRoutes");
+app.use("/api/profile", profileRoutes);
+
+
+
+const statisticsRoutes = require("./routes/statisticsRoutes");
+
+app.use("/api/statistics", statisticsRoutes);
+
+const resourceRoutes = require("./routes/resourceRoutes");
+app.use("/api/resources", resourceRoutes);

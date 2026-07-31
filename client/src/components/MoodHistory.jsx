@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
+import { createPortal } from "react-dom";
 
 function MoodHistory({ entries, fetchMoods }) {
   // const [moods, setMoods] = useState([]);
@@ -11,7 +12,7 @@ function MoodHistory({ entries, fetchMoods }) {
     stress: 5,
     sleep: 8,
   });
-  
+
 
   // const fetchMoods = async () => {
   //   try {
@@ -71,7 +72,7 @@ function MoodHistory({ entries, fetchMoods }) {
     }
   };
 
-  
+
   return (
     <div className="mt-12">
 
@@ -86,56 +87,6 @@ function MoodHistory({ entries, fetchMoods }) {
       ) : (
         <div className="overflow-x-auto">
 
-          {/* <table className="w-full bg-white rounded-xl shadow-lg">
-
-            <thead className="bg-emerald-600 text-white">
-
-              <tr>
-
-                <th className="p-4">Date</th>
-
-                <th className="p-4">Mood</th>
-
-                <th className="p-4">Stress</th>
-
-                <th className="p-4">Sleep</th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {moods.map((item) => (
-
-                <tr
-                  key={item._id}
-                  className="border-b text-center hover:bg-gray-50"
-                >
-
-                  <td className="p-4">
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </td>
-
-                  <td className="p-4">
-                    {item.mood}
-                  </td>
-
-                  <td className="p-4">
-                    {item.stress}/10
-                  </td>
-
-                  <td className="p-4">
-                    {item.sleep} hrs
-                  </td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table> */}
           <div className="grid md:grid-cols-3 gap-6">
 
             {entries.map((item) => (
@@ -218,100 +169,114 @@ function MoodHistory({ entries, fetchMoods }) {
 
         </div>
       )}
-      {editingMood && (
+      {editingMood &&
+  createPortal(
+    <div
+      className="
+        fixed
+        inset-0
+        z-[9999]
+        flex
+        items-center
+        justify-center
+        bg-black/50
+        backdrop-blur-sm
+        p-4
+      "
+      onClick={() => setEditingMood(null)}
+    >
+      <div
+        className="
+          w-full
+          max-w-md
+          rounded-2xl
+          bg-white
+          p-8
+          shadow-2xl
+        "
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-2xl font-bold mb-6">
+          Edit Mood
+        </h2>
 
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+        <label className="block mb-2 font-medium">
+          Mood
+        </label>
 
-          <div className="bg-white rounded-2xl p-8 w-[400px]">
+        <select
+          className="w-full border rounded-lg p-3 mb-5"
+          value={editData.mood}
+          onChange={(e) =>
+            setEditData({
+              ...editData,
+              mood: e.target.value,
+            })
+          }
+        >
+          <option>Happy</option>
+          <option>Calm</option>
+          <option>Neutral</option>
+          <option>Sad</option>
+          <option>Anxious</option>
+          <option>Stressed</option>
+        </select>
 
-            <h2 className="text-2xl font-bold mb-6">
-              Edit Mood
-            </h2>
+        <label className="block mb-2 font-medium">
+          Stress ({editData.stress}/10)
+        </label>
 
-            <label>Mood</label>
+        <input
+          type="range"
+          min="1"
+          max="10"
+          className="w-full mb-5"
+          value={editData.stress}
+          onChange={(e) =>
+            setEditData({
+              ...editData,
+              stress: Number(e.target.value),
+            })
+          }
+        />
 
-            <select
-              className="w-full border p-2 rounded mt-2 mb-4"
-              value={editData.mood}
-              onChange={(e) =>
-                setEditData({
-                  ...editData,
-                  mood: e.target.value
-                })
-              }
-            >
+        <label className="block mb-2 font-medium">
+          Sleep (hours)
+        </label>
 
-              <option>Happy</option>
+        <input
+          type="number"
+          min="1"
+          max="24"
+          className="w-full border rounded-lg p-3"
+          value={editData.sleep}
+          onChange={(e) =>
+            setEditData({
+              ...editData,
+              sleep: Number(e.target.value),
+            })
+          }
+        />
 
-              <option>Calm</option>
+        <div className="flex gap-3 mt-8">
+          <button
+            onClick={handleUpdate}
+            className="flex-1 rounded-lg bg-green-600 py-3 text-white hover:bg-green-700"
+          >
+            Save
+          </button>
 
-              <option>Neutral</option>
-
-              <option>Sad</option>
-
-              <option>Anxious</option>
-
-              <option>Stressed</option>
-
-            </select>
-
-            <label>
-              Stress
-            </label>
-
-            <input
-              type="range"
-              min="1"
-              max="10"
-              className="w-full"
-              value={editData.stress}
-              onChange={(e) =>
-                setEditData({
-                  ...editData,
-                  stress: Number(e.target.value)
-                })
-              }
-            />
-
-            <label>
-              Sleep
-            </label>
-
-            <input
-              type="number"
-              className="w-full border p-2 rounded mt-2"
-              value={editData.sleep}
-              onChange={(e) =>
-                setEditData({
-                  ...editData,
-                  sleep: Number(e.target.value)
-                })
-              }
-            />
-
-            <div className="flex gap-3 mt-8">
-
-              <button
-                onClick={handleUpdate}
-                className="flex-1 bg-green-600 text-white py-2 rounded-lg"
-              >
-                Save
-              </button>
-
-              <button
-                onClick={() => setEditingMood(null)}
-                className="flex-1 bg-gray-500 text-white py-2 rounded-lg"
-              >
-                Cancel
-              </button>
-
-            </div>
-
-          </div>
-
+          <button
+            onClick={() => setEditingMood(null)}
+            className="flex-1 rounded-lg bg-gray-500 py-3 text-white hover:bg-gray-600"
+          >
+            Cancel
+          </button>
         </div>
-
-      )}
+      </div>
+    </div>,
+    document.body
+  )}
     </div>
   );
 }

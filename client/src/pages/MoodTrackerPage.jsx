@@ -8,8 +8,7 @@ function MoodTrackerPage(){
     <div className="container pt-2 px-6">
       <div className="page-title pt-32 text-center">
         {/* <h1>Mood Tracker</h1> */}
-        <p className="max-w-3xl mx-auto mt-4">
-          Taking a minute to understand your emotions is a small step towards better mental well-being. 
+<p className="mt-2 text-xl leading-9 text-gray-600 max-w-4xl mx-auto text-center">          Taking a minute to understand your emotions is a small step towards better mental well-being. 
           Record today's mood and receive personal wellness suggestions. 
         </p>
       </div>

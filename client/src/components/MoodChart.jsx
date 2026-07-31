@@ -1,83 +1,5 @@
-// import {
-//   Chart as ChartJS,
-//   CategoryScale,
-//   LinearScale,
-//   PointElement,
-//   LineElement,
-//   Tooltip,
-//   Legend,
-// } from "chart.js";
-
-// import { Line } from "react-chartjs-2";
-
-// ChartJS.register(
-//   CategoryScale,
-//   LinearScale,
-//   PointElement,
-//   LineElement,
-//   Tooltip,
-//   Legend
-// );
-
-// function MoodChart({ moodHistory =[]}) {
-
-//   const data = {
-//     labels: moodHistory.map((item) => item.date),
-
-//     datasets: [
-//       {
-//         label: "Stress Level",
-
-//         data: moodHistory.map((item) => item.stress),
-
-//         borderColor: "#059669",
-
-//         backgroundColor: "#6EE7B7",
-
-//         tension: 0.4,
-
-//         fill: true,
-//       },
-//     ],
-//   };
-
-//   const options = {
-//     responsive: true,
-
-//     plugins: {
-//       legend: {
-//         display: true,
-//       },
-//     },
-
-//     scales: {
-//       y: {
-//         min: 0,
-//         max: 10,
-//       },
-//     },
-//   };
-
-//   return (
-//     <div className="bg-white dark:bg-[#23372E] rounded-3xl shadow-xl p-8 mt-8">
-
-//       <h2 className="text-2xl font-bold text-emerald-700 dark:text-green-300 mb-6">
-//         Weekly Stress Trend
-//       </h2>
-
-//       <Line
-//         data={data}
-//         options={options}
-//       />
-
-//     </div>
-//   );
-// }
-
-// export default MoodChart;
-import {
-  Line
-} from "react-chartjs-2";
+import { useState } from "react";
+import { Line } from "react-chartjs-2";
 
 import {
   Chart as ChartJS,
@@ -87,6 +9,7 @@ import {
   LineElement,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 
 ChartJS.register(
@@ -95,26 +18,27 @@ ChartJS.register(
   PointElement,
   LineElement,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 function MoodChart({ moods }) {
-  if (!moods || moods.length === 0) {
-    return (
-      <div className="text-center py-10">
-        No mood data available.
-      </div>
-    );
-  }
+  const [view, setView] = useState("weekly");
 
-  // Last 7 entries
-  const weekly = [...moods].slice(-7);
+  if (!moods || moods.length === 0) return null;
 
-  const labels = weekly.map((item) =>
-    new Date(item.createdAt).toLocaleDateString("en-IN", {
-      weekday: "short",
-    })
+  // Sort by oldest -> newest
+  const sortedMoods = [...moods].sort(
+    (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
   );
+
+  const weeklyData = sortedMoods.slice(-7);
+  const monthlyData = sortedMoods.slice(-30);
+
+  const displayData =
+    view === "weekly"
+      ? weeklyData
+      : monthlyData;
 
   const moodScore = {
     Happy: 6,
@@ -125,23 +49,26 @@ function MoodChart({ moods }) {
     Stressed: 1,
   };
 
+  const labels = displayData.map((item) =>
+    new Date(item.createdAt).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+    })
+  );
+
   const data = {
     labels,
     datasets: [
       {
         label: "Mood Level",
-        data: weekly.map((item) => moodScore[item.mood]),
-
+        data: displayData.map(
+          (item) => moodScore[item.mood]
+        ),
         borderColor: "#10b981",
-
         backgroundColor: "rgba(16,185,129,0.2)",
-
-        tension: 0.4,
-
         fill: true,
-
+        tension: 0.4,
         pointRadius: 5,
-
         pointHoverRadius: 8,
       },
     ],
@@ -149,7 +76,6 @@ function MoodChart({ moods }) {
 
   const options = {
     responsive: true,
-
     maintainAspectRatio: false,
 
     plugins: {
@@ -164,32 +90,145 @@ function MoodChart({ moods }) {
         max: 6,
 
         ticks: {
-          callback: function (value) {
-            const names = {
+          callback(value) {
+            return {
               1: "Stressed",
               2: "Anxious",
               3: "Sad",
               4: "Neutral",
               5: "Calm",
               6: "Happy",
-            };
-
-            return names[value];
+            }[value];
           },
         },
       },
     },
   };
 
+  // Statistics based on selected view
+  const totalEntries = displayData.length;
+
+  const averageStress =
+    totalEntries > 0
+      ? (
+          displayData.reduce(
+            (sum, item) => sum + item.stress,
+            0
+          ) / totalEntries
+        ).toFixed(1)
+      : 0;
+
+  const averageSleep =
+    totalEntries > 0
+      ? (
+          displayData.reduce(
+            (sum, item) => sum + item.sleep,
+            0
+          ) / totalEntries
+        ).toFixed(1)
+      : 0;
+
+  const latestMood =
+    totalEntries > 0
+      ? displayData[displayData.length - 1].mood
+      : "-";
+
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 mt-12">
+    <div className="bg-white rounded-2xl shadow-xl p-8 mt-10">
+
       <h2 className="text-3xl font-bold text-center mb-8">
-        Weekly Mood Analytics
+        Mood Analytics
       </h2>
 
-      <div className="h-[450px]">
-        <Line data={data} options={options} />
+      <div className="flex justify-center gap-5 mb-8">
+
+        <button
+          onClick={() => setView("weekly")}
+          className={`px-6 py-3 rounded-xl font-semibold transition ${
+            view === "weekly"
+              ? "bg-emerald-600 text-white"
+              : "bg-gray-200"
+          }`}
+        >
+          Weekly
+        </button>
+
+        <button
+          onClick={() => setView("monthly")}
+          className={`px-6 py-3 rounded-xl font-semibold transition ${
+            view === "monthly"
+              ? "bg-emerald-600 text-white"
+              : "bg-gray-200"
+          }`}
+        >
+          Monthly
+        </button>
+
       </div>
+
+      {/* Statistics */}
+
+      <div className="grid md:grid-cols-4 gap-6 mb-8">
+
+        <div className="bg-emerald-50 rounded-xl p-5 text-center shadow">
+
+          <h3 className="text-3xl font-bold text-emerald-700">
+            {totalEntries}
+          </h3>
+
+          <p>
+            Entries
+          </p>
+
+        </div>
+
+        <div className="bg-blue-50 rounded-xl p-5 text-center shadow">
+
+          <h3 className="text-3xl font-bold text-blue-700">
+            {averageStress}
+          </h3>
+
+          <p>
+            Average Stress
+          </p>
+
+        </div>
+
+        <div className="bg-yellow-50 rounded-xl p-5 text-center shadow">
+
+          <h3 className="text-3xl font-bold text-yellow-700">
+            {averageSleep}
+          </h3>
+
+          <p>
+            Average Sleep
+          </p>
+
+        </div>
+
+        <div className="bg-purple-50 rounded-xl p-5 text-center shadow">
+
+          <h3 className="text-2xl font-bold text-purple-700">
+            {latestMood}
+          </h3>
+
+          <p>
+            Latest Mood
+          </p>
+
+        </div>
+
+      </div>
+
+      <div className="h-[450px]">
+
+        <Line
+          data={data}
+          options={options}
+        />
+
+      </div>
+
     </div>
   );
 }

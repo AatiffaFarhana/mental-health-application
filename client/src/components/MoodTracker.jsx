@@ -29,6 +29,16 @@ function MoodTracker() {
 
   const [selectedExercise, setSelectedExercise] = useState("");
 
+  const [showHistory, setShowHistory] = useState(false);
+
+//   const [stats, setStats] = useState({
+//   totalEntries: 0,
+//   latestMood: "",
+//   averageStress: 0,
+//   averageSleep: 0,
+// });
+  
+
   useEffect(() => {
 
     gsap.from(cardRef.current, {
@@ -37,6 +47,7 @@ function MoodTracker() {
       duration: 1,
       ease: "power3.out",
     });
+    // loadStatistics();
 
   }, []);
   useEffect(() => {
@@ -51,7 +62,9 @@ function MoodTracker() {
       console.log(err);
     }
   };
+  
 
+  
   const handleSave = async () => {
     if (!mood) {
       alert("Please select your mood.");
@@ -68,6 +81,7 @@ function MoodTracker() {
       console.log(res.data);
 
       alert("Mood Saved Successfully!");
+      // loadStatistics();
       fetchMoods();
 
       let exercises = [];
@@ -284,16 +298,37 @@ function MoodTracker() {
         </>
 
       )}
-      <MoodHistory
+      {entries.length > 0 && (
+  <MoodChart moods={entries} />
+)}
+
+<div className="mt-10 flex justify-center">
+
+  <button
+    onClick={() => setShowHistory(!showHistory)}
+    className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-semibold transition"
+  >
+    {showHistory ? "Hide Mood History" : "View Mood History"}
+  </button>
+
+</div>
+
+{showHistory && (
+
+  <div className="mt-8">
+
+    <MoodHistory
       entries={entries}
       fetchMoods={fetchMoods}
-      />
-      {/* <MoodChart moods={moods}/> */}
-      <MoodChart moods={entries}/>
+    />
 
-    </div>
+  </div>
 
-  );
+)}
+
+</div>
+
+);
 
 }
 
