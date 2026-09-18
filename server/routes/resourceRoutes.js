@@ -1,70 +1,148 @@
+
+
 const express = require("express");
 const router = express.Router();
 
 const MentalHealthResource = require("../models/MentalHealthResources");
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
+// --------------------------------------------------
+// GET ALL VERIFIED TAMIL NADU RESOURCES
+// GET /api/resources/state
+// --------------------------------------------------
 
-  const R = 6371;
+router.get("/state", async (req, res) => {
+    try {
+        console.log(
+            "Loading verified Tamil Nadu mental-health resources..."
+        );
 
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+        const resources = await MentalHealthResource.find({
+            verified: true,
+            state: "Tamil Nadu"
+        })
+            .sort({
+                district: 1,
+                name: 1
+            })
+            .lean();
 
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-      Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) ** 2;
+        console.log(
+            `Verified Tamil Nadu resources found: ${resources.length}`
+        );
 
-  return (
-    R *
-    2 *
-    Math.atan2(
-      Math.sqrt(a),
-      Math.sqrt(1 - a)
-    )
-  );
+        res.json(resources);
 
-}
+    } catch (error) {
+        console.error(
+            "Tamil Nadu resource route error:",
+            error
+        );
 
+        res.status(500).json({
+            message:
+                "Failed to fetch verified Tamil Nadu mental-health resources."
+        });
+    }
+});
+
+// --------------------------------------------------
+// GET VERIFIED RESOURCES BY DISTRICT
+// GET /api/resources?district=Madurai
+// --------------------------------------------------
 router.get("/", async (req, res) => {
+    try {
+        const { district } = req.query;
 
-  try {
+        if (!district) {
+            return res.status(400).json({
+                message: "Tamil Nadu district is required."
+            });
+        }
 
-    const lat = Number(req.query.lat);
-    const lon = Number(req.query.lon);
+        // --------------------------------------------
+        // NORMALIZE DISTRICT NAME
+        // --------------------------------------------
 
-    const hospitals = await MentalHealthResource.find();
+        const normalizedDistrict = district
+            .toLowerCase()
+            .trim()
+            .replace(/\s+district$/i, "")
+            .replace(/\s+/g, " ");
 
-    const result = hospitals.map((h) => ({
+        console.log(
+            "Requested district:",
+            district
+        );
 
-      ...h.toObject(),
+        console.log(
+            "Normalized district:",
+            normalizedDistrict
+        );
 
-      distance: calculateDistance(
-        lat,
-        lon,
-        h.latitude,
-        h.longitude
-      ),
+        // --------------------------------------------
+        // GET VERIFIED TAMIL NADU RESOURCES
+        // --------------------------------------------
 
-    }));
+        const resources =
+            await MentalHealthResource.find({
+                verified: true,
+                state: "Tamil Nadu"
+            })
+            .sort({
+                name: 1
+            })
+            .lean();
 
-    result.sort((a, b) => a.distance - b.distance);
+        // --------------------------------------------
+        // FILTER DISTRICT IN JAVASCRIPT
+        // --------------------------------------------
 
-    res.json(result.slice(0, 10));
+        const filteredResources =
+            resources.filter((resource) => {
 
-  }
+                const resourceDistrict =
+                    (resource.district || "")
+                        .toLowerCase()
+                        .trim()
+                        .replace(/\s+district$/i, "")
+                        .replace(/\s+/g, " ");
 
-  catch (err) {
+                // Handle known spelling variation
+                const normalizedResourceDistrict =
+                    resourceDistrict === "pudukottai"
+                        ? "pudukkottai"
+                        : resourceDistrict;
 
-    console.log(err);
+                const normalizedRequestedDistrict =
+                    normalizedDistrict === "pudukottai"
+                        ? "pudukkottai"
+                        : normalizedDistrict;
 
-    res.status(500).json({
-      message: "Unable to fetch hospitals",
-    });
+                return (
+                    normalizedResourceDistrict ===
+                    normalizedRequestedDistrict
+                );
+            });
 
-  }
+        console.log(
+            `Verified resources found for ${district}:`,
+            filteredResources.length
+        );
 
+        res.json(filteredResources);
+
+    } catch (error) {
+
+        console.error(
+            "Mental-health resource route error:",
+            error
+        );
+
+        res.status(500).json({
+            message:
+                "Failed to fetch verified mental-health resources."
+        });
+    }
 });
 
 module.exports = router;

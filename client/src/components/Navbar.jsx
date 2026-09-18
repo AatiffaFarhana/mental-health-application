@@ -3,21 +3,19 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/api";
-// import ThemeToggle from "./ThemeToggle";
 
 function Navbar() {
   const navRef = useRef(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
 
   const navigate = useNavigate();
 
   const { user, logout } = useAuth();
-  const [profile, setProfile] = useState(null);
 
-  
-
+  // Navbar animation
   useEffect(() => {
     gsap.from(navRef.current, {
       y: -80,
@@ -26,29 +24,44 @@ function Navbar() {
       ease: "power3.out",
     });
   }, []);
+
+  // Fetch profile only when logged-in user changes
   useEffect(() => {
-  if (!user) return;
-
-  const fetchProfile = async () => {
-    try {
-      const res = await api.get("/profile");
-      setProfile(res.data);
-    } catch (err) {
-      console.log(err);
+    if (!user) {
       setProfile(null);
+      return;
     }
-  };
 
-  fetchProfile();
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get("/profile");
+        setProfile(res.data);
+      } catch (err) {
+        console.log("Profile error:", err);
 
-}, [user]);
+        // Invalid / expired JWT
+        if (err.response?.status === 401) {
+          logout();
+          setProfile(null);
+          setProfileOpen(false);
+          navigate("/login", { replace: true });
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    setProfile(null);
     setProfileOpen(false);
+    navigate("/login");
   };
 
   const getInitials = (name) => {
+    if (!name) return "U";
+
     return name
       .split(" ")
       .map((word) => word[0])
@@ -69,6 +82,7 @@ function Navbar() {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
 
+        {/* Logo */}
         <NavLink
           to="/"
           className="text-2xl font-bold text-emerald-700"
@@ -76,6 +90,7 @@ function Navbar() {
           It's Okay To Not Be Okay
         </NavLink>
 
+        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
 
           <NavLink to="/" className={linkStyle}>
@@ -94,11 +109,10 @@ function Navbar() {
             Resources
           </NavLink>
 
-          {/* <ThemeToggle /> */}
-
           {user ? (
             <div className="relative">
 
+              {/* Profile Button */}
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
                 className="w-11 h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center transition"
@@ -106,8 +120,9 @@ function Navbar() {
                 {getInitials(user.name)}
               </button>
 
+              {/* Profile Dropdown */}
               {profileOpen && (
-                <div className="absolute right-0 top-14 w-72 bg-white rounded-2xl shadow-2xl border">
+                <div className="absolute right-0 top-14 w-72 bg-white rounded-2xl shadow-2xl border overflow-hidden">
 
                   <div className="px-5 py-4 bg-emerald-50">
 
@@ -120,33 +135,35 @@ function Navbar() {
                     </p>
 
                   </div>
+
                   <div className="p-6 space-y-4">
 
-                    <p>
-                      📝 Mood Entries :
-                      <strong> {profile.moodCount}</strong>
-                    </p>
+                    {profile ? (
+                      <>
+                        <p>
+                          📝 Mood Entries :
+                          <strong> {profile.moodCount}</strong>
+                        </p>
 
-                    <p>
-                      😊 Latest Mood :
-                      <strong> {profile.latestMood}</strong>
-                    </p>
+                        <p>
+                          😊 Latest Mood :
+                          <strong> {profile.latestMood || "None"}</strong>
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-gray-500 text-sm">
+                        Loading profile...
+                      </p>
+                    )}
 
                     <button
                       onClick={handleLogout}
-                      className="w-full bg-red-500 hover:bg-red-600 text-white rounded-lg py-3"
+                      className="w-full bg-red-500 hover:bg-red-600 text-white rounded-lg py-3 transition"
                     >
                       Logout
                     </button>
 
                   </div>
-
-                  {/* <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-5 py-3 hover:bg-red-50 text-red-600 transition"
-                  >
-                    Logout
-                  </button> */}
 
                 </div>
               )}
@@ -166,6 +183,7 @@ function Navbar() {
 
         </div>
 
+        {/* Mobile Menu Button */}
         <button
           className="md:hidden text-3xl"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -175,6 +193,7 @@ function Navbar() {
 
       </div>
 
+      {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden flex flex-col bg-white px-6 pb-6 gap-5">
 
@@ -230,40 +249,51 @@ function Navbar() {
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="w-11 h-11 rounded-full bg-emerald-600 text-white font-bold text-lg flex items-center justify-center"
                 >
-                  {user.name.charAt(0).toUpperCase()}
+                  {getInitials(user.name)}
                 </button>
 
-                {profileOpen && profile && (
-
+                {profileOpen && (
                   <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl p-5">
 
-                    <h3 className="text-xl font-bold text-emerald-700">
-                      👤 {profile.name}
-                    </h3>
+                    {profile ? (
+                      <>
+                        <h3 className="text-xl font-bold text-emerald-700">
+                          👤 {profile.name}
+                        </h3>
 
-                    <p className="text-gray-500 mt-2">
-                      {profile.email}
-                    </p>
+                        <p className="text-gray-500 mt-2">
+                          {profile.email}
+                        </p>
 
-                    <hr className="my-4" />
+                        <hr className="my-4" />
 
-                    <p>
-                      📝 Mood Entries : <strong>{profile.moodCount}</strong>
-                    </p>
+                        <p>
+                          📝 Mood Entries :
+                          <strong> {profile.moodCount}</strong>
+                        </p>
 
-                    <p className="mt-2">
-                      😊 Latest Mood : <strong>{profile.latestMood}</strong>
-                    </p>
+                        <p className="mt-2">
+                          😊 Latest Mood :
+                          <strong>
+                            {" "}
+                            {profile.latestMood || "None"}
+                          </strong>
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-gray-500 text-sm">
+                        Loading profile...
+                      </p>
+                    )}
 
                     <button
                       onClick={handleLogout}
-                      className="mt-5 w-full bg-red-500 hover:bg-red-600 text-white rounded-lg py-2"
+                      className="mt-5 w-full bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 transition"
                     >
                       Logout
                     </button>
 
                   </div>
-
                 )}
 
               </div>
@@ -288,11 +318,8 @@ function Navbar() {
             </>
           )}
 
-          {/* <ThemeToggle /> */}
-
         </div>
       )}
-
     </nav>
   );
 }
